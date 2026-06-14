@@ -104,7 +104,7 @@ const constructorItemsInitialState: ConstructorItemsState = {
     ingredients: []
   },
   orderRequest: false,
-  orderModalData: {} as TOrder | null,
+  orderModalData: null,
   selectedIngredient: null
 };
 
