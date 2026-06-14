@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { useLocation, Location } from 'react-router-dom';
 import { useEffect } from 'react';
 import {
   fetchIngredients,
@@ -6,7 +7,7 @@ import {
   selectIsLoading,
   selectError
 } from '../../services/slices';
-
+import { useNavigate } from 'react-router-dom';
 import {
   ConstructorPage,
   Feed,
@@ -29,6 +30,9 @@ import { useSelector, useDispatch } from '../../services/store';
 const App = () => {
   /** DONE: взять переменные из стора */
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const backgroundLocation = location.state?.backgroundLocation;
 
   useEffect(() => {
     dispatch(fetchIngredients());
@@ -41,7 +45,7 @@ const App = () => {
   return (
     <div className={styles.app}>
       <AppHeader />
-      <Routes>
+      <Routes location={backgroundLocation || location}>
         <Route
           path='/'
           element={
@@ -72,32 +76,39 @@ const App = () => {
         <Route path='/profile' element={<Profile />} />
         <Route path='/profile/orders' element={<ProfileOrders />} />
         <Route path='*' element={<NotFound404 />} />
-        {/** OLGA TODO: write appropriate titles */}
-        <Route
-          path='/feed/:number'
-          element={
-            <Modal title='Детали заказа' onClose={() => {}}>
-              <OrderInfo />
-            </Modal>
-          }
-        />
-        <Route
-          path='/ingredients/:id'
-          element={
-            <Modal title='Детали ингредиента' onClose={() => {}}>
-              <IngredientDetails />
-            </Modal>
-          }
-        />
-        <Route
-          path='/profile/orders/:number'
-          element={
-            <Modal title='Детали заказа' onClose={() => {}}>
-              <OrderInfo />
-            </Modal>
-          }
-        />
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
+        <Route path='/feed/:number' element={<OrderInfo />} />
+        <Route path='/profile/orders/:number' element={<OrderInfo />} />
       </Routes>
+      {/** OLGA TODO: write appropriate titles */}
+      {backgroundLocation && (
+        <Routes>
+          <Route
+            path='/feed/:number'
+            element={
+              <Modal title='Детали заказа' onClose={() => navigate(-1)}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+          <Route
+            path='/ingredients/:id'
+            element={
+              <Modal title='Детали ингредиента' onClose={() => navigate(-1)}>
+                <IngredientDetails />
+              </Modal>
+            }
+          />
+          <Route
+            path='/profile/orders/:number'
+            element={
+              <Modal title='Детали заказа' onClose={() => navigate(-1)}>
+                <OrderInfo />
+              </Modal>
+            }
+          />
+        </Routes>
+      )}
     </div>
   );
 };
