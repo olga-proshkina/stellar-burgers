@@ -1,4 +1,12 @@
-import { getIngredientsApi } from '@api';
+import {
+  getIngredientsApi,
+  loginUserApi,
+  TRegisterData,
+  TLoginData,
+  registerUserApi,
+  logoutApi,
+  orderBurgerApi
+} from '@api';
 import {
   createAsyncThunk,
   createSelector,
@@ -9,6 +17,7 @@ import { TConstructorIngredient, TIngredient } from '@utils-types';
 // avoid importing RootState here to prevent circular type/runtime dependency
 import { ingredientList } from './data';
 import { TOrder } from '@utils-types';
+import { setCookie, getCookie } from '../utils/cookie';
 
 // INGREDIENTS
 
@@ -95,7 +104,6 @@ type ConstructorItemsState = {
   };
   orderRequest: boolean;
   orderModalData: TOrder | null;
-  selectedIngredient: TIngredient | null;
 };
 
 const constructorItemsInitialState: ConstructorItemsState = {
@@ -104,19 +112,27 @@ const constructorItemsInitialState: ConstructorItemsState = {
     ingredients: []
   },
   orderRequest: false,
-  orderModalData: null,
-  selectedIngredient: null
+  orderModalData: null
 };
+
+export const asyncOrderBurger = createAsyncThunk(
+  'constructor/orderBurger',
+  async (ingredientIds: string[]) => {
+    const data = await orderBurgerApi(ingredientIds);
+    return data;
+  }
+);
 
 export const constructorSlice = createSlice({
   name: 'constructorItems',
   initialState: constructorItemsInitialState,
   reducers: {
-    setBun: (state, action) => {
-      state.constructorItems.bun = action.payload;
-    },
-    setIngredients: (state, action) => {
-      state.constructorItems.ingredients = action.payload;
+    addIngredient: (state, action) => {
+      if (action.payload.type === 'bun') {
+        state.constructorItems.bun = action.payload;
+      } else {
+        state.constructorItems.ingredients.push(action.payload);
+      }
     },
     clear: (state) => {
       state.constructorItems.bun = null;
@@ -127,24 +143,16 @@ export const constructorSlice = createSlice({
     },
     setOrderModalData: (state, action: PayloadAction<TOrder | null>) => {
       state.orderModalData = action.payload;
-    },
-    setSelectedIngredient: (
-      state,
-      action: PayloadAction<TIngredient | null>
-    ) => {
-      state.selectedIngredient = action.payload;
     }
   },
   selectors: {
     selectConstructorItems: (sliceState) => sliceState.constructorItems,
     selectOrderRequest: (sliceState) => sliceState.orderRequest,
-    selectOrderModalData: (sliceState) => sliceState.orderModalData,
-    selectSelectedIngredient: (sliceState) => sliceState.selectedIngredient
+    selectOrderModalData: (sliceState) => sliceState.orderModalData
   }
 });
 
-export const { setBun, setIngredients, clear, setSelectedIngredient } =
-  constructorSlice.actions;
+export const { clear, addIngredient } = constructorSlice.actions;
 export const constructorSliceReducer = constructorSlice.reducer;
 
 // export const selectConstructorItems = (state: any) =>
@@ -152,8 +160,7 @@ export const constructorSliceReducer = constructorSlice.reducer;
 export const {
   selectConstructorItems,
   selectOrderRequest,
-  selectOrderModalData,
-  selectSelectedIngredient
+  selectOrderModalData
 } = constructorSlice.selectors;
 
 type TFeedState = {
@@ -215,30 +222,117 @@ export const orderSliceReducer = orderSlice.reducer;
 
 type TUserState = {
   user: {
-    name: string;
     email: string;
+    name: string;
   } | null;
   isAuthChecked: boolean;
   userOrders: TOrder[];
+  loginUserRequest: boolean;
+  loginUserError: string | null;
 };
 
 const userInitialState: TUserState = {
   user: null,
   isAuthChecked: false,
-  userOrders: [] as TOrder[]
+  userOrders: [] as TOrder[],
+  loginUserRequest: false,
+  loginUserError: null
 };
+
+export const loginUser = createAsyncThunk(
+  'user/loginUser',
+  async ({ email, password }: Omit<TLoginData, 'name'>) => {
+    const data = await loginUserApi({ email, password });
+    localStorage.setItem('refreshToken', data.refreshToken);
+    setCookie('accessToken', data.accessToken);
+    return data;
+  }
+);
+
+export const registerUser = createAsyncThunk(
+  'user/registerUser',
+  async ({ email, name, password }: TRegisterData) => {
+    const data = await registerUserApi({ email, name, password });
+    localStorage.setItem('refreshToken', data.refreshToken);
+    setCookie('accessToken', data.accessToken);
+    return data;
+  }
+);
+
+export const logoutUser = createAsyncThunk('user/logoutUser', async () => {
+  const data = await logoutApi();
+  return data;
+});
 
 export const userSlice = createSlice({
   name: 'user',
   initialState: userInitialState,
-  reducers: {},
+  reducers: {
+    setUser: (
+      state,
+      action: PayloadAction<{ email: string; name: string }>
+    ) => {
+      state.user = action.payload;
+    },
+    clearUser: (state) => {
+      state.user = null;
+    }
+  },
   selectors: {
+    selectUserOrders: (sliceState) => sliceState.userOrders,
     selectUser: (sliceState) => sliceState.user,
     selectIsAuthChecked: (sliceState) => sliceState.isAuthChecked,
-    selectUserOrders: (sliceState) => sliceState.userOrders
+    selectLoginUserRequest: (sliceState) => sliceState.loginUserRequest,
+    selectLoginUserError: (sliceState) => sliceState.loginUserError
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(loginUser.pending, (state) => {
+        state.loginUserRequest = true;
+        state.loginUserError = null;
+        state.isAuthChecked = false;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loginUserRequest = false;
+        state.loginUserError = action.error.message || 'Failed to login';
+        state.isAuthChecked = false;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loginUserRequest = false;
+        state.user = action.payload.user;
+        state.isAuthChecked = true;
+      })
+      .addCase(registerUser.pending, (state) => {
+        state.loginUserRequest = true;
+        state.loginUserError = null;
+        state.isAuthChecked = false;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loginUserRequest = false;
+        state.loginUserError = action.error.message || 'Failed to register';
+        state.isAuthChecked = false;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.loginUserRequest = false;
+        state.user = action.payload.user;
+        state.isAuthChecked = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.isAuthChecked = false;
+
+        localStorage.removeItem('refreshToken');
+        setCookie('accessToken', '', { expires: -1 });
+      });
   }
 });
 
-export const { selectUser, selectIsAuthChecked, selectUserOrders } =
-  userSlice.selectors;
+export const {
+  selectUser,
+  selectIsAuthChecked,
+  selectUserOrders,
+  selectLoginUserRequest,
+  selectLoginUserError
+} = userSlice.selectors;
+export const { setUser, clearUser } = userSlice.actions;
 export const userSliceReducer = userSlice.reducer;
