@@ -13,12 +13,7 @@ import {
   resetPasswordApi,
   forgotPasswordApi
 } from '@api';
-import {
-  createAsyncThunk,
-  createSelector,
-  createSlice,
-  PayloadAction
-} from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { TConstructorIngredient, TIngredient } from '@utils-types';
 // avoid importing RootState here to prevent circular type/runtime dependency
 import { ingredientList } from './data';
@@ -139,9 +134,6 @@ export const constructorSlice = createSlice({
       } else {
         state.constructorItems.ingredients.push(action.payload);
       }
-    },
-    setOrderRequest: (state, action: PayloadAction<boolean>) => {
-      state.orderRequest = action.payload;
     },
     setOrderModalData: (state, action: PayloadAction<TOrder | null>) => {
       state.orderModalData = action.payload;
