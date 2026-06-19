@@ -5,7 +5,8 @@ import {
   fetchIngredients,
   selectIngredients,
   selectIsLoading,
-  selectError
+  selectError,
+  fetchFeed
 } from '../../services/slices';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -37,6 +38,7 @@ const App = () => {
 
   useEffect(() => {
     dispatch(fetchIngredients());
+    dispatch(fetchFeed());
   }, [dispatch]);
 
   const isIngredientsLoading = useSelector(selectIsLoading);
@@ -73,14 +75,7 @@ const App = () => {
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
         <Route path='/forgot-password' element={<ForgotPassword />} />
-        <Route
-          path='/reset-password'
-          element={
-            <ProtectedRoute>
-              <ResetPassword />
-            </ProtectedRoute>
-          }
-        />
+        <Route path='/reset-password' element={<ResetPassword />} />
         <Route
           path='/profile'
           element={

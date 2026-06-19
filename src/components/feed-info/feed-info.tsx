@@ -4,7 +4,6 @@ import { TOrder } from '@utils-types';
 import { FeedInfoUI } from '../ui/feed-info';
 import { useSelector } from '../../services/store';
 import {
-  // selectOrders,
   selectFeed,
   selectReadyOrders,
   selectPendingOrders
@@ -18,7 +17,6 @@ const getOrders = (orders: TOrder[], status: string): number[] =>
 
 export const FeedInfo: FC = () => {
   /** DONE: взять переменные из стора */
-  // const orders: TOrder[] = useSelector(selectOrders);
   const feed = useSelector(selectFeed);
   const readyOrders = useSelector(selectReadyOrders);
   const pendingOrders = useSelector(selectPendingOrders);

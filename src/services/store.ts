@@ -10,7 +10,6 @@ import {
   constructorSliceReducer,
   ingredientsSliceReducer,
   feedSliceReducer,
-  orderSliceReducer,
   userSliceReducer
 } from './slices';
 
@@ -18,7 +17,6 @@ const rootReducer = {
   ingredients: ingredientsSliceReducer,
   constructorItems: constructorSliceReducer,
   feed: feedSliceReducer,
-  order: orderSliceReducer,
   user: userSliceReducer
 };
 

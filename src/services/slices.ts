@@ -5,7 +5,13 @@ import {
   TLoginData,
   registerUserApi,
   logoutApi,
-  orderBurgerApi
+  orderBurgerApi,
+  getFeedsApi,
+  getOrdersApi,
+  getOrderByNumberApi,
+  updateUserApi,
+  resetPasswordApi,
+  forgotPasswordApi
 } from '@api';
 import {
   createAsyncThunk,
@@ -115,7 +121,7 @@ const constructorItemsInitialState: ConstructorItemsState = {
   orderModalData: null
 };
 
-export const asyncOrderBurger = createAsyncThunk(
+export const orderBurger = createAsyncThunk(
   'constructor/orderBurger',
   async (ingredientIds: string[]) => {
     const data = await orderBurgerApi(ingredientIds);
@@ -134,10 +140,6 @@ export const constructorSlice = createSlice({
         state.constructorItems.ingredients.push(action.payload);
       }
     },
-    clear: (state) => {
-      state.constructorItems.bun = null;
-      state.constructorItems.ingredients = [];
-    },
     setOrderRequest: (state, action: PayloadAction<boolean>) => {
       state.orderRequest = action.payload;
     },
@@ -149,10 +151,27 @@ export const constructorSlice = createSlice({
     selectConstructorItems: (sliceState) => sliceState.constructorItems,
     selectOrderRequest: (sliceState) => sliceState.orderRequest,
     selectOrderModalData: (sliceState) => sliceState.orderModalData
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(orderBurger.pending, (state) => {
+        state.orderRequest = true;
+        state.orderModalData = null;
+      })
+      .addCase(orderBurger.rejected, (state, action) => {
+        state.orderRequest = false;
+        state.orderModalData = null;
+      })
+      .addCase(orderBurger.fulfilled, (state, action) => {
+        state.orderRequest = false;
+        state.orderModalData = action.payload.order as unknown as TOrder;
+        state.constructorItems.bun = null;
+        state.constructorItems.ingredients = [];
+      });
   }
 });
 
-export const { clear, addIngredient } = constructorSlice.actions;
+export const { addIngredient, setOrderModalData } = constructorSlice.actions;
 export const constructorSliceReducer = constructorSlice.reducer;
 
 // export const selectConstructorItems = (state: any) =>
@@ -165,6 +184,7 @@ export const {
 
 type TFeedState = {
   orders: TOrder[];
+  order: TOrder | null;
   feed: any;
   readyOrders: number[];
   pendingOrders: number[];
@@ -172,10 +192,24 @@ type TFeedState = {
 
 const feedInitialState: TFeedState = {
   orders: [],
+  order: null,
   feed: {},
   readyOrders: [],
   pendingOrders: []
 };
+
+export const fetchFeed = createAsyncThunk('feed/fetchFeed', async () => {
+  const data = await getFeedsApi();
+  return data;
+});
+
+export const fetchOrder = createAsyncThunk(
+  'feed/fetchOrder',
+  async (orderNumber: number) => {
+    const data = await getOrderByNumberApi(orderNumber);
+    return data;
+  }
+);
 
 export const feedSlice = createSlice({
   name: 'feed',
@@ -183,9 +217,39 @@ export const feedSlice = createSlice({
   reducers: {},
   selectors: {
     selectOrders: (sliceState) => sliceState.orders,
+    selectOrder: (sliceState) => sliceState.order,
     selectFeed: (sliceState) => sliceState.feed,
     selectReadyOrders: (sliceState) => sliceState.readyOrders,
     selectPendingOrders: (sliceState) => sliceState.pendingOrders
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchFeed.pending, () => {})
+      .addCase(fetchFeed.rejected, (state, action) => {
+        state.orders = [];
+        state.feed = {};
+        state.readyOrders = [];
+        state.pendingOrders = [];
+      })
+      .addCase(fetchFeed.fulfilled, (state, action) => {
+        state.orders = action.payload.orders;
+        state.feed = {
+          total: action.payload.total,
+          totalToday: action.payload.totalToday
+        };
+        state.readyOrders = action.payload.orders
+          .filter((order: TOrder) => order.status === 'done')
+          .map((order: TOrder) => order.number);
+        state.pendingOrders = action.payload.orders
+          .filter((order: TOrder) => order.status === 'pending')
+          .map((order: TOrder) => order.number);
+      })
+      .addCase(fetchOrder.fulfilled, (state, action) => {
+        state.order = action.payload.orders[0];
+      })
+      .addCase(fetchOrder.rejected, (state, action) => {
+        state.order = null;
+      });
   }
 });
 
@@ -193,32 +257,10 @@ export const {
   selectOrders,
   selectFeed,
   selectReadyOrders,
-  selectPendingOrders
+  selectPendingOrders,
+  selectOrder
 } = feedSlice.selectors;
 export const feedSliceReducer = feedSlice.reducer;
-
-type TOrderState = {
-  orderData: TOrder | null;
-  orderIngredients: TIngredient[];
-};
-
-const orderInitialState: TOrderState = {
-  orderData: null,
-  orderIngredients: []
-};
-
-export const orderSlice = createSlice({
-  name: 'order',
-  initialState: orderInitialState,
-  reducers: {},
-  selectors: {
-    selectOrderData: (sliceState) => sliceState.orderData,
-    selectOrderIngredients: (sliceState) => sliceState.orderIngredients
-  }
-});
-
-export const { selectOrderData, selectOrderIngredients } = orderSlice.selectors;
-export const orderSliceReducer = orderSlice.reducer;
 
 type TUserState = {
   user: {
@@ -259,10 +301,40 @@ export const registerUser = createAsyncThunk(
   }
 );
 
+export const updateUser = createAsyncThunk(
+  'user/updateUser',
+  async ({ email, name, password }: TRegisterData) => {
+    const data = await updateUserApi({ email, name, password });
+    return data;
+  }
+);
+
 export const logoutUser = createAsyncThunk('user/logoutUser', async () => {
   const data = await logoutApi();
   return data;
 });
+
+export const fetchUserOrders = createAsyncThunk(
+  'user/fetchUserOrders',
+  async () => {
+    const data = await getOrdersApi();
+    return data;
+  }
+);
+
+export const forgotPassword = createAsyncThunk(
+  'user/forgotPassword',
+  async (email: string) => {
+    await forgotPasswordApi({ email });
+  }
+);
+
+export const resetPassword = createAsyncThunk(
+  'user/resetPassword',
+  async ({ password, token }: { password: string; token: string }) => {
+    await resetPasswordApi({ password, token });
+  }
+);
 
 export const userSlice = createSlice({
   name: 'user',
@@ -320,9 +392,14 @@ export const userSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.isAuthChecked = false;
-
         localStorage.removeItem('refreshToken');
         setCookie('accessToken', '', { expires: -1 });
+      })
+      .addCase(updateUser.fulfilled, (state, action) => {
+        state.user = action.payload.user;
+      })
+      .addCase(fetchUserOrders.fulfilled, (state, action) => {
+        state.userOrders = action.payload;
       });
   }
 });
