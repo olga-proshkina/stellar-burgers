@@ -34,7 +34,7 @@ const App = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const backgroundLocation = location.state?.backgroundLocation;
+  const backgroundLocation = location.state?.background;
 
   useEffect(() => {
     dispatch(fetchIngredients());
@@ -72,10 +72,38 @@ const App = () => {
           }
         />
         <Route path='/feed' element={<Feed />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='/register' element={<Register />} />
-        <Route path='/forgot-password' element={<ForgotPassword />} />
-        <Route path='/reset-password' element={<ResetPassword />} />
+        <Route
+          path='/login'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <Login />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/register'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <Register />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/forgot-password'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <ForgotPassword />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path='/reset-password'
+          element={
+            <ProtectedRoute onlyUnAuth>
+              <ResetPassword />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path='/profile'
           element={
@@ -93,35 +121,19 @@ const App = () => {
           }
         />
         <Route path='*' element={<NotFound404 />} />
-        <Route
-          path='/ingredients/:id'
-          element={
-            <Modal title='Детали ингредиента' onClose={() => navigate(-1)}>
-              <IngredientDetails />
-            </Modal>
-          }
-        />
-        <Route
-          path='/feed/:number'
-          element={
-            <Modal title='Детали заказа' onClose={() => navigate(-1)}>
-              <OrderInfo />
-            </Modal>
-          }
-        />
+        <Route path='/ingredients/:id' element={<IngredientDetails />} />
+        <Route path='/feed/:number' element={<OrderInfo />} />
         <Route
           path='/profile/orders/:number'
           element={
             <ProtectedRoute>
-              <Modal title='Детали заказа' onClose={() => navigate(-1)}>
-                <OrderInfo />
-              </Modal>
+              <OrderInfo />
             </ProtectedRoute>
           }
         />
       </Routes>
-      {/** OLGA TODO: write appropriate titles */}
-      {/* {backgroundLocation && (
+
+      {backgroundLocation && (
         <Routes>
           <Route
             path='/feed/:number'
@@ -148,7 +160,7 @@ const App = () => {
             }
           />
         </Routes>
-      )} */}
+      )}
     </div>
   );
 };
