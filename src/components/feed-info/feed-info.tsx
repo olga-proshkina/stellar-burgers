@@ -7,7 +7,7 @@ import {
   selectFeed,
   selectReadyOrders,
   selectPendingOrders
-} from '../../services/slices';
+} from '../../services/slices/feedSlice';
 
 const getOrders = (orders: TOrder[], status: string): number[] =>
   orders

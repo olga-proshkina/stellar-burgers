@@ -7,9 +7,10 @@ import {
   selectOrderRequest,
   selectOrderModalData,
   orderBurger,
-  setOrderModalData,
-  selectIsAuthChecked
-} from '../../services/slices';
+  setOrderModalData
+} from '../../services/slices/constructorSlice';
+import { selectIsUserChecked } from '../../services/slices/userSlice';
+
 export const BurgerConstructor: FC = () => {
   /** DONE: взять переменные constructorItems, orderRequest и orderModalData из стора */
   const constructorItems = useSelector(selectConstructorItems) ?? {
@@ -17,12 +18,12 @@ export const BurgerConstructor: FC = () => {
     ingredients: [] as TConstructorIngredient[]
   };
   const orderRequest = useSelector(selectOrderRequest);
-  const isAuthChecked = useSelector(selectIsAuthChecked);
+  const isUserChecked = useSelector(selectIsUserChecked);
   const orderModalData = useSelector(selectOrderModalData);
   const dispatch = useDispatch();
 
   const onOrderClick = () => {
-    if (!constructorItems.bun || orderRequest || !isAuthChecked) return;
+    if (!constructorItems.bun || orderRequest || !isUserChecked) return;
     dispatch(
       orderBurger([
         constructorItems.bun._id,

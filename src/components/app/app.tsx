@@ -5,9 +5,10 @@ import {
   fetchIngredients,
   selectIngredients,
   selectIsLoading,
-  selectError,
-  fetchFeed
-} from '../../services/slices';
+  selectError
+} from '../../services/slices/ingredientsSlice';
+import { fetchFeed } from '../../services/slices/feedSlice';
+import { checkUserAuth } from '../../services/slices/userSlice';
 import { useNavigate } from 'react-router-dom';
 import {
   ConstructorPage,
@@ -39,6 +40,7 @@ const App = () => {
   useEffect(() => {
     dispatch(fetchIngredients());
     dispatch(fetchFeed());
+    dispatch(checkUserAuth());
   }, [dispatch]);
 
   const isIngredientsLoading = useSelector(selectIsLoading);

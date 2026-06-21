@@ -1,5 +1,8 @@
 import { useSelector } from '../../services/store';
-import { selectUser, selectLoginUserRequest } from '../../services/slices';
+import {
+  selectUser,
+  selectIsUserChecked
+} from '../../services/slices/userSlice';
 import { Navigate, useLocation } from 'react-router-dom';
 import { Preloader } from '@ui';
 
@@ -12,11 +15,11 @@ export const ProtectedRoute = ({
   onlyUnAuth,
   children
 }: ProtectedRouteProps) => {
-  const isLoginRequest = useSelector(selectLoginUserRequest);
+  const isUserChecked = useSelector(selectIsUserChecked);
   const user = useSelector(selectUser);
   const location = useLocation();
 
-  if (isLoginRequest) {
+  if (!isUserChecked) {
     return <Preloader />;
   }
 

@@ -5,7 +5,11 @@ import { TIngredient, TTabMode } from '@utils-types';
 import { BurgerIngredientsUI } from '../ui/burger-ingredients';
 
 import { useSelector, useDispatch } from '../../services/store';
-import { selectBuns, selectMains, selectSauces } from '../../services/slices';
+import {
+  selectBuns,
+  selectMains,
+  selectSauces
+} from '../../services/slices/ingredientsSlice';
 
 export const BurgerIngredients: FC = () => {
   /** DONE: взять переменные из стора */

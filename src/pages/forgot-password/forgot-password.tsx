@@ -2,7 +2,7 @@ import { FC, useState, SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useDispatch } from '../../services/store';
-import { forgotPassword } from '../../services/slices';
+import { forgotPassword } from '../../services/slices/userSlice';
 import { ForgotPasswordUI } from '@ui-pages';
 
 export const ForgotPassword: FC = () => {
