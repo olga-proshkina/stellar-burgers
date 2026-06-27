@@ -1,7 +1,8 @@
 import { FC, useState, SyntheticEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { forgotPasswordApi } from '@api';
+import { useDispatch } from '../../services/store';
+import { forgotPassword } from '../../services/slices/userSlice';
 import { ForgotPasswordUI } from '@ui-pages';
 
 export const ForgotPassword: FC = () => {
@@ -9,12 +10,14 @@ export const ForgotPassword: FC = () => {
   const [error, setError] = useState<Error | null>(null);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
 
     setError(null);
-    forgotPasswordApi({ email })
+    dispatch(forgotPassword(email))
+      .unwrap()
       .then(() => {
         localStorage.setItem('resetPassword', 'true');
         navigate('/reset-password', { replace: true });
