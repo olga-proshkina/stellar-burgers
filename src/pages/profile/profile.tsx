@@ -39,6 +39,7 @@ export const Profile: FC = () => {
         password: formValue.password
       })
     );
+    setFormValue((prev) => ({ ...prev, password: '' }));
   };
 
   const handleCancel = (e: SyntheticEvent) => {
